@@ -7,7 +7,7 @@ on:
 
 jobs:
   desplegar:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Obtener el código del repositorio
         uses: actions/checkout@v4
@@ -31,4 +31,4 @@ jobs:
         run: ansible-playbook site.yml
 
       - name: Verificar que el servicio responde
-        run: curl -sf http://$\{\{ secrets.VIP_ADDRESS }}/ || exit 1
+        run: curl -sf http://${{ secrets.VIP_ADDRESS }}/ || exit 1
