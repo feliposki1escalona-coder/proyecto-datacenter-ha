@@ -1,0 +1,27 @@
+---
+- name: Desplegar el archivo Compose base del clúster MongoDB
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ srv_base }}/mongo/docker-compose.yml"
+    mode: "0644"
+
+- name: Desplegar el override de producción
+  ansible.builtin.template:
+    src: docker-compose.prod.yml.j2
+    dest: "{{ srv_base }}/mongo/docker-compose.prod.yml"
+    mode: "0644"
+
+- name: Levantar el miembro del Replica Set (base + override)
+  community.docker.docker_compose_v2:
+    project_src: "{{ srv_base }}/mongo"
+    files:
+      - docker-compose.yml
+      - docker-compose.prod.yml
+    state: present
+
+- name: Esperar a que mongod acepte conexiones
+  ansible.builtin.wait_for:
+    port: "{{ mongo_port }}"
+    host: "{{ ansible_host }}"
+    delay: 3
+    timeout: 60

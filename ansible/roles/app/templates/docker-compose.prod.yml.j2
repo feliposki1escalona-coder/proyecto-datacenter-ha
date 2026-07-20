@@ -1,0 +1,8 @@
+# OVERRIDE: entorno de producción.
+services:
+  web:
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      APP_NODE: "{{ inventory_hostname }}"
+      MONGO_URI: "mongodb://{% for h in groups['dbcluster'] %}{{ hostvars[h].ansible_host }}:{{ mongo_port }}{% if not loop.last %},{% endif %}{% endfor %}/produccion?replicaSet=rs0"

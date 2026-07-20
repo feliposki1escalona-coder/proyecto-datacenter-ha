@@ -1,0 +1,14 @@
+# OVERRIDE DE PRODUCCIÓN: hereda del base e inyecta lo específico del entorno.
+services:
+  mongo:
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - {{ srv_base }}/mongo/data:/data/db
+    environment:
+      MONGO_NODE: "{{ inventory_hostname }}"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,45 @@
+---
+- name: Desplegar la configuración de HAProxy
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: "{{ srv_base }}/loadbalancer/haproxy.cfg"
+    mode: "0644"
+  notify: reiniciar keepalived
+
+- name: Desplegar el Compose base del balanceador
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ srv_base }}/loadbalancer/docker-compose.yml"
+    mode: "0644"
+
+- name: Desplegar el override de producción
+  ansible.builtin.template:
+    src: docker-compose.prod.yml.j2
+    dest: "{{ srv_base }}/loadbalancer/docker-compose.prod.yml"
+    mode: "0644"
+
+- name: Levantar HAProxy (base + override)
+  community.docker.docker_compose_v2:
+    project_src: "{{ srv_base }}/loadbalancer"
+    files:
+      - docker-compose.yml
+      - docker-compose.prod.yml
+    state: present
+
+- name: Instalar keepalived
+  ansible.builtin.apt:
+    name: keepalived
+    state: present
+
+- name: Desplegar la configuración de keepalived
+  ansible.builtin.template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    mode: "0644"
+  notify: reiniciar keepalived
+
+- name: Asegurar keepalived activo y habilitado
+  ansible.builtin.systemd:
+    name: keepalived
+    state: started
+    enabled: true

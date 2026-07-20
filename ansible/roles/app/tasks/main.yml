@@ -1,0 +1,40 @@
+---
+- name: Desplegar el código de la aplicación
+  ansible.builtin.template:
+    src: app.py.j2
+    dest: "{{ srv_base }}/app/app.py"
+    mode: "0644"
+
+- name: Desplegar el Dockerfile
+  ansible.builtin.template:
+    src: Dockerfile.j2
+    dest: "{{ srv_base }}/app/Dockerfile"
+    mode: "0644"
+
+- name: Desplegar el Compose base de la aplicación
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ srv_base }}/app/docker-compose.yml"
+    mode: "0644"
+
+- name: Desplegar el override de producción
+  ansible.builtin.template:
+    src: docker-compose.prod.yml.j2
+    dest: "{{ srv_base }}/app/docker-compose.prod.yml"
+    mode: "0644"
+
+- name: Construir y levantar la aplicación stateless
+  community.docker.docker_compose_v2:
+    project_src: "{{ srv_base }}/app"
+    files:
+      - docker-compose.yml
+      - docker-compose.prod.yml
+    build: policy
+    state: present
+
+- name: Esperar a que la aplicación responda
+  ansible.builtin.wait_for:
+    port: 8080
+    host: "{{ ansible_host }}"
+    delay: 3
+    timeout: 120

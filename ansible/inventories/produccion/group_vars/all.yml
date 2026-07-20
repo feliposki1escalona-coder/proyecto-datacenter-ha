@@ -1,0 +1,14 @@
+---
+ansible_user: devops
+internal_subnet: 10.0.0.0/24
+vip_address: 10.0.0.100
+app_port: 80
+mongo_port: 27017
+srv_base: /srv
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+vrrp_password: "Clu5terHA2026"

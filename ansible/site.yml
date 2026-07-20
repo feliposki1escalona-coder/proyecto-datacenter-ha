@@ -1,0 +1,34 @@
+---
+- name: Aprovisionamiento base de todos los nodos
+  hosts: nodes
+  become: true
+  roles:
+    - base
+
+# Fase 1: levantar los tres miembros en paralelo
+- name: Desplegar los miembros del clúster MongoDB
+  hosts: dbcluster
+  become: true
+  roles:
+    - mongo
+
+# Fase 2: inicializar el conjunto una sola vez, desde el primer nodo
+- name: Inicializar el Replica Set
+  hosts: "{{ groups['dbcluster'][0] }}"
+  become: true
+  roles:
+    - mongo_init
+
+# Fase 3: aplicación stateless en los tres nodos
+- name: Desplegar la aplicación stateless
+  hosts: app
+  become: true
+  roles:
+    - app
+
+# Fase 4: balanceadores + IP virtual
+- name: Desplegar balanceadores de carga y VIP
+  hosts: loadbalancers
+  become: true
+  roles:
+    - loadbalancer

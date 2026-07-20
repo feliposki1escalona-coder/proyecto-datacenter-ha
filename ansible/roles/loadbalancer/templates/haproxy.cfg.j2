@@ -1,0 +1,31 @@
+global
+    log stdout format raw local0
+    maxconn 4096
+
+defaults
+    mode http
+    log global
+    option httplog
+    option redispatch
+    retries 3
+    timeout connect 3s
+    timeout client 30s
+    timeout server 30s
+
+frontend web_frontend
+    bind *:{{ app_port }}
+    default_backend web_backend
+
+backend web_backend
+    balance roundrobin
+    option httpchk GET /health
+    default-server check inter 2s fall 2 rise 1
+{% for h in groups['app'] %}
+    server {{ h }} {{ hostvars[h].ansible_host }}:8080
+{% endfor %}
+
+listen stats
+    bind *:8404
+    stats enable
+    stats uri /
+    stats refresh 5s

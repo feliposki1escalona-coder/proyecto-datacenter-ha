@@ -1,0 +1,26 @@
+import os, socket
+from flask import Flask, jsonify
+from pymongo import MongoClient
+
+app = Flask(__name__)
+NODO = os.environ.get("APP_NODE", socket.gethostname())
+cliente = MongoClient(os.environ["MONGO_URI"], serverSelectionTimeoutMS=3000)
+db = cliente.produccion
+
+@app.route("/")
+def index():
+    db.visitas.insert_one({"nodo": NODO})
+    total = db.visitas.count_documents({})
+    primary = cliente.primary
+    return jsonify({
+        "atendido_por": NODO,
+        "visitas_totales": total,
+        "mongo_primary": f"{primary[0]}:{primary[1]}" if primary else "sin primary"
+    })
+
+@app.route("/health")
+def health():
+    return jsonify({"estado": "ok", "nodo": NODO})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)

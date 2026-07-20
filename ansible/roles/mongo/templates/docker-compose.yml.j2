@@ -1,0 +1,7 @@
+# ARCHIVO BASE: define únicamente la topología del servicio.
+# Sin credenciales, sin rutas del host, sin políticas de despliegue.
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: mongo
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]

@@ -1,0 +1,30 @@
+---
+# Se ejecuta solo cuando los TRES miembros ya están escuchando.
+- name: Comprobar si el Replica Set ya está inicializado
+  community.docker.docker_container_exec:
+    container: mongo
+    command: mongosh --quiet --eval "rs.status().ok"
+  register: rs_estado
+  failed_when: false
+  changed_when: false
+
+- name: Inicializar el Replica Set con los tres miembros
+  community.docker.docker_container_exec:
+    container: mongo
+    command: >-
+      mongosh --quiet --eval
+      'rs.initiate({_id:"rs0",members:[
+      {_id:0,host:"{{ hostvars[groups["dbcluster"][0]].ansible_host }}:{{ mongo_port }}"},
+      {_id:1,host:"{{ hostvars[groups["dbcluster"][1]].ansible_host }}:{{ mongo_port }}"},
+      {_id:2,host:"{{ hostvars[groups["dbcluster"][2]].ansible_host }}:{{ mongo_port }}"}]})'
+  when: rs_estado.rc != 0
+
+- name: Esperar a que el clúster elija un Primary
+  community.docker.docker_container_exec:
+    container: mongo
+    command: mongosh --quiet --eval "rs.status().members.filter(m => m.stateStr == 'PRIMARY').length"
+  register: primary_check
+  until: primary_check.stdout | trim == "1"
+  retries: 12
+  delay: 5
+  changed_when: false
